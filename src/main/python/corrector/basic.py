@@ -57,7 +57,7 @@ class Corrector:
     def size(self) -> int:
         return self._size
 
-    def is_valid(self, words: Iterable[str]) -> Set[str]:
+    def get_valid(self, words: Iterable[str]) -> Set[str]:
         if not words:
             return set()
 
@@ -69,6 +69,9 @@ class Corrector:
             return 0
 
         return self._counter[word] / self._count
+
+    def find_candidates(self, word: str) -> Set[str]:
+        pass
 
 
 if __name__ == '__main__':
