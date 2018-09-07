@@ -27,6 +27,7 @@ def set_properties(project):
     project.set_property("coverage_exceptions", [
         "__init__",
         "corrector",
+        "corrector.basic",
     ])
 
     project.set_property("coverage_threshold_warn", 35)  # default is 70
