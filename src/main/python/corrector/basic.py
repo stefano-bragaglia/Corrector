@@ -24,7 +24,9 @@ def parse(content: str) -> List[str]:
     if not content:
         return []
 
-    return re.findall(r'[a-z]+[\'-][a-z]+|[a-z]+|'
+    return re.findall(r'[a-z]+[\'-][a-z]+[\'-][a-z]+|'
+                      r'[a-z]+[\'-][a-z]+|'
+                      r'[a-z]+|'
                       r'\d+,\d{3},\d{3},\d{3}\.\d+|'
                       r'\d+,\d{3},\d{3},\d{3}th|'
                       r'\d+,\d{3},\d{3},\d{3}|'
