@@ -1,7 +1,9 @@
 import logging
 import os
 import re
-from typing import Dict, List
+from typing import Counter, Dict, List
+
+from jellyfish import damerau_levenshtein_distance
 
 _folder = os.path.abspath(os.path.dirname(__file__))
 _logger = logging.getLogger(__name__)
@@ -25,16 +27,17 @@ def do_abodat() -> List[Dict[str, str]]:
             for block in line.split(','):
                 block = block.strip()
                 parts = block.split()
-                note = re.search(r'\[.+\]', block)
-                freq = re.search(r'\d+', block)
-                rows.append({
-                    'error': parts[0],
-                    'correct': parts[1],
-                    'note': '' if not note else note.group(0)[1:-1],
-                    'freq': '1' if not freq else freq.group(0),
-                    'comment': comment.split()[-1],
-                    'source': 'abo.dat'
-                })
+                if parts[0] != parts[1]:
+                    note = re.search(r'\[.+\]', block)
+                    freq = re.search(r'\d+', block)
+                    rows.append({
+                        'error': parts[0],
+                        'correct': parts[1],
+                        'note': '' if not note else note.group(0)[1:-1],
+                        'freq': '1' if not freq else freq.group(0),
+                        'comment': comment.split()[-1],
+                        'source': 'abo.dat'
+                    })
     finally:
         return rows
 
@@ -54,14 +57,15 @@ def do_appling1() -> List[Dict[str, str]]:
                 comment = line[1:]
             else:
                 parts = line.split(maxsplit=2)
-                rows.append({
-                    'error': parts[0],
-                    'correct': parts[1],
-                    'note': parts[2],
-                    'freq': '1',
-                    'comment': comment.split()[-1],
-                    'source': 'appling1.dat'
-                })
+                if parts[0] != parts[1]:
+                    rows.append({
+                        'error': parts[0],
+                        'correct': parts[1],
+                        'note': parts[2],
+                        'freq': '1',
+                        'comment': comment.split()[-1],
+                        'source': 'appling1.dat'
+                    })
     finally:
         return rows
 
@@ -81,14 +85,15 @@ def do_appling2() -> List[Dict[str, str]]:
                 comment = line[1:]
             else:
                 parts = line.split(maxsplit=1)
-                rows.append({
-                    'error': parts[0],
-                    'correct': parts[1],
-                    'note': '',
-                    'freq': '1',
-                    'comment': comment.split()[-1],
-                    'source': 'appling2.dat'
-                })
+                if parts[0] != parts[1]:
+                    rows.append({
+                        'error': parts[0],
+                        'correct': parts[1],
+                        'note': '',
+                        'freq': '1',
+                        'comment': comment.split()[-1],
+                        'source': 'appling2.dat'
+                    })
     finally:
         return rows
 
@@ -102,7 +107,6 @@ def do_bloor() -> List[Dict[str, str]]:
     except Exception as e:
         _logger.warning(str(e))
     else:
-        comment = 'Algerian'
         for line in lines:
             if line[-1] == ']':
                 line, note = [part.strip() for part in line.split('[', maxsplit=1)]
@@ -110,14 +114,15 @@ def do_bloor() -> List[Dict[str, str]]:
                 note = ''
             parts = line.split()
             for i in range(2, len(parts)):
-                rows.append({
-                    'error': parts[i],
-                    'correct': parts[0],
-                    'note': note,
-                    'freq': parts[1],
-                    'comment': comment.split()[-1],
-                    'source': 'bloor.dat'
-                })
+                if parts[i] != parts[0]:
+                    rows.append({
+                        'error': parts[i],
+                        'correct': parts[0],
+                        'note': note,
+                        'freq': parts[1],
+                        'comment': 'Algerian',
+                        'source': 'bloor.dat'
+                    })
     finally:
         return rows
 
@@ -131,11 +136,10 @@ def do_ches() -> List[Dict[str, str]]:
     except Exception as e:
         _logger.warning(str(e))
     else:
-        table = ' often visited aunt magnificent house opposite gallery remember splendid purple curtains wrote' \
+        table = '_ often visited aunt magnificent house opposite gallery remember splendid purple curtains wrote' \
                 ' poetry problem understand latest poems wanted laugh pretend really special refreshment there' \
                 ' blue juice cake biscuits stomach contented'.split()
         note = ''
-        comment = 'British'
         for line in lines:
             if line:
                 if line[-1] == '!':
@@ -145,14 +149,17 @@ def do_ches() -> List[Dict[str, str]]:
                     note = tokens[0]
                 pos = 1
                 while pos < len(tokens):
-                    rows.append({
-                        'error': tokens[pos + 1],
-                        'correct': table[int(tokens[pos])],
-                        'note': note,
-                        'freq': '1',
-                        'comment': comment.split()[-1],
-                        'source': 'ches.dat'
-                    })
+                    error = tokens[pos + 1]
+                    correct = table[int(tokens[pos])]
+                    if error not in ['..', correct]:
+                        rows.append({
+                            'error': error,
+                            'correct': correct,
+                            'note': note,
+                            'freq': '1',
+                            'comment': 'British',
+                            'source': 'ches.dat'
+                        })
                     pos += 2
     finally:
         return rows
@@ -160,14 +167,14 @@ def do_ches() -> List[Dict[str, str]]:
 
 if __name__ == '__main__':
     dataset = do_abodat() + do_appling1() + do_appling2() + do_bloor() + do_ches()
-    print(dataset)
+    # dataset = do_ches()
+    # print(dataset)
 
-    corrections = {(row['error'], row['correct']) for row in dataset}
-    print(corrections)
+    values = [damerau_levenshtein_distance(error, correct)
+              for error, correct in {(row['error'], row['correct']) for row in dataset}]
 
-    corrects = {row['correct'] for row in dataset}
-    print(corrects)
-
-    print(len(dataset))
-    print(len(corrections))
-    print(len(corrects))
+    counter = Counter(values)
+    size = sum(counter.values())
+    for key in sorted(counter.keys()):
+        value = counter[key]
+        print('%s | %s - %s' % (key, value, value / size))
