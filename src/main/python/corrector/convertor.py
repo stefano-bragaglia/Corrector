@@ -31,8 +31,8 @@ def do_abodat() -> List[Dict[str, str]]:
                     note = re.search(r'\[.+\]', block)
                     freq = re.search(r'\d+', block)
                     rows.append({
-                        'error': parts[0],
-                        'correct': parts[1],
+                        'error': re.sub(r'_', ' ', parts[0]),
+                        'correct': re.sub(r'_', ' ', parts[1]),
                         'note': '' if not note else note.group(0)[1:-1],
                         'freq': '1' if not freq else freq.group(0),
                         'comment': comment.split()[-1],
@@ -59,8 +59,8 @@ def do_appling1() -> List[Dict[str, str]]:
                 parts = line.split(maxsplit=2)
                 if parts[0] != parts[1]:
                     rows.append({
-                        'error': parts[0],
-                        'correct': parts[1],
+                        'error': re.sub(r'_', ' ', parts[0]),
+                        'correct': re.sub(r'_', ' ', parts[1]),
                         'note': parts[2],
                         'freq': '1',
                         'comment': comment.split()[-1],
@@ -87,8 +87,8 @@ def do_appling2() -> List[Dict[str, str]]:
                 parts = line.split(maxsplit=1)
                 if parts[0] != parts[1]:
                     rows.append({
-                        'error': parts[0],
-                        'correct': parts[1],
+                        'error': re.sub(r'_', ' ', parts[0]),
+                        'correct': re.sub(r'_', ' ', parts[1]),
                         'note': '',
                         'freq': '1',
                         'comment': comment.split()[-1],
@@ -116,8 +116,8 @@ def do_bloor() -> List[Dict[str, str]]:
             for i in range(2, len(parts)):
                 if parts[i] != parts[0]:
                     rows.append({
-                        'error': parts[i],
-                        'correct': parts[0],
+                        'error': re.sub(r'_', ' ', parts[i]),
+                        'correct': re.sub(r'_', ' ', parts[0]),
                         'note': note,
                         'freq': parts[1],
                         'comment': 'Algerian',
@@ -153,8 +153,8 @@ def do_ches() -> List[Dict[str, str]]:
                     correct = table[int(tokens[pos])]
                     if error not in ['..', correct]:
                         rows.append({
-                            'error': error,
-                            'correct': correct,
+                            'error': re.sub(r'_', ' ', error),
+                            'correct': re.sub(r'_', ' ', correct),
                             'note': note,
                             'freq': '1',
                             'comment': 'British',
@@ -165,9 +165,492 @@ def do_ches() -> List[Dict[str, str]]:
         return rows
 
 
+def do_exams() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'EXAMSDAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        comment = ''
+        for line in lines:
+            if line:
+                if line.startswith('$'):
+                    comment = line[1:].title()
+                elif line[0] in '1234567890' or line in ['-', 'I']:
+                    continue
+                else:
+                    note, freq = '', 1
+                    if len(line.split()) > 2:
+                        error, correct, block = line.split(maxsplit=2)
+                        if len(block.split()) > 1 and block[0] in '1234567890':
+                            freq, note = block.split(maxsplit=1)
+                        elif block[0] in '1234567890':
+                            freq = block
+                        else:
+                            note = block
+                        if note.startswith('[') and note.endswith(']'):
+                            note = note[1:-1].strip()
+                        if correct == '00' and note.startswith('"') and note.endswith('"'):
+                            correct = note[1:-1].strip()
+                            note = ''
+                    else:
+                        error, correct = line.split()
+                    if error in ['?', correct]:
+                        continue
+                    if error.startswith('?'):
+                        error = error[1:].strip()
+                    rows.append({
+                        'error': re.sub(r'_', ' ', error),
+                        'correct': re.sub(r'_', ' ', correct),
+                        'note': note,
+                        'freq': freq,
+                        'comment': comment,
+                        'source': 'exams.dat'
+                    })
+    finally:
+        return rows
+
+
+def do_fawthrop1() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'FAWTHROP1DAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        for line in lines:
+            if line:
+                correct, error = line.lower().split()
+                if error != correct:
+                    rows.append({
+                        'error': re.sub(r'_', ' ', error),
+                        'correct': re.sub(r'_', ' ', correct),
+                        'note': '',
+                        'freq': 1,
+                        'comment': '',
+                        'source': 'fawthrop1.dat'
+                    })
+    finally:
+        return rows
+
+
+def do_fawthrop2() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'FAWTHROP2DAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        for line in lines:
+            if line:
+                correct, error, freq = line.lower().split()
+                if error != correct:
+                    rows.append({
+                        'error': re.sub(r'_', ' ', error),
+                        'correct': re.sub(r'_', ' ', correct),
+                        'note': '',
+                        'freq': freq,
+                        'comment': '',
+                        'source': 'fawthrop2.dat'
+                    })
+    finally:
+        return rows
+
+
+def do_sheffield() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'SHEFFIELDDAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        for line in lines:
+            if line:
+                correct, error = line.lower().split()
+                if error != correct:
+                    rows.append({
+                        'error': re.sub(r'_', ' ', error),
+                        'correct': re.sub(r'_', ' ', correct),
+                        'note': '',
+                        'freq': 1,
+                        'comment': '',
+                        'source': 'sheffield.dat'
+                    })
+    finally:
+        return rows
+
+
+def do_gates() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'GATESDAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        for line in lines:
+            if line:
+                pos = 1
+                tokens = line.split()
+                while pos < len(tokens):
+                    if tokens[pos][0] != '$':
+                        error = tokens[pos][1:]
+                        if error != tokens[0]:
+                            rows.append({
+                                'error': re.sub(r'_', ' ', error),
+                                'correct': re.sub(r'_', ' ', tokens[0]),
+                                'note': '',
+                                'freq': tokens[pos + 1],
+                                'comment': 'American',
+                                'source': 'gates.dat'
+                            })
+                    pos += 2
+    finally:
+        return rows
+
+
+def do_masters() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'MASTERSDAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        correct, comment = '', ''
+        for line in lines:
+            if line:
+                if line.startswith('$'):
+                    correct, comment = line[1:].lower().split(maxsplit=1)
+                else:
+                    error, note = line.lower().split(maxsplit=1)
+                    if error != correct:
+                        rows.append({
+                            'error': re.sub(r'_', ' ', error),
+                            'correct': re.sub(r'_', ' ', correct),
+                            'note': note,
+                            'freq': 1,
+                            'comment': comment,
+                            'source': 'masters.dat'
+                        })
+    finally:
+        return rows
+
+
+def do_nfer1() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'NFER1DAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        note = ''
+        table = {
+            '1': 'we',
+            '2': 'will',
+            '3': 'be',
+            '4': 'coming',
+            '5': 'to',
+            '6': 'leeds',
+            '7': 'on',
+            '8': 'sunday',
+            '9': 'with',
+            '10': 'our',
+            '11': 'two',
+            '12': 'sons',
+            '13': 'as',
+            '14': 'you',
+            '15': 'were',
+            '16': 'not',
+            '17': 'there',
+            '18': 'last',
+            '19': 'time',
+            '20': 'we',
+            '21': 'came',
+            '22': 'we',
+            '23': 'are',
+            '24': 'looking',
+            '25': 'forward',
+            '26': 'to',
+            '27': 'seeing',
+            '28': 'you',
+            '29': 'again',
+            '30': 'best',
+            '31': 'wishes',
+            '51': 'friends',
+            '52': 'station',
+            '53': 'babies',
+            '54': 'walked',
+            '55': 'digging',
+            '56': 'cooking',
+            '57': 'half',
+            '58': 'various',
+            '59': 'potatoes',
+            '60': 'dining',
+            '61': 'admitted',
+            '62': 'received',
+            '63': 'noticeable'
+        }
+        for line in lines:
+            if line:
+                pos = 1
+                if line[-1] == '!':
+                    line = line[:-1].strip()
+                tokens = line.split()
+                if tokens[0][0] in '1234567890':
+                    note = tokens[0]
+                while pos < len(tokens):
+                    correct = table[tokens[pos]]
+                    error = tokens[pos + 1]
+                    if error != correct:
+                        rows.append({
+                            'error': re.sub(r'_', ' ', error),
+                            'correct': re.sub(r'_', ' ', correct),
+                            'note': note,
+                            'freq': 1,
+                            'comment': 'British',
+                            'source': 'nfer1.dat'
+                        })
+                    pos += 2
+    finally:
+        return rows
+
+
+def do_nfer2() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'NFER2DAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        note = ''
+        table = {
+            '1': 'we',
+            '2': 'will',
+            '3': 'be',
+            '4': 'coming',
+            '5': 'to',
+            '6': 'leeds',
+            '7': 'on',
+            '8': 'sunday',
+            '9': 'with',
+            '10': 'our',
+            '11': 'two',
+            '12': 'sons',
+            '13': 'as',
+            '14': 'you',
+            '15': 'were',
+            '16': 'not',
+            '17': 'there',
+            '18': 'last',
+            '19': 'time',
+            '20': 'we',
+            '21': 'came',
+            '22': 'we',
+            '23': 'are',
+            '24': 'looking',
+            '25': 'forward',
+            '26': 'to',
+            '27': 'seeing',
+            '28': 'you',
+            '29': 'again',
+            '30': 'best',
+            '31': 'wishes',
+            '51': 'friends',
+            '52': 'station',
+            '53': 'babies',
+            '54': 'walked',
+            '55': 'digging',
+            '56': 'cooking',
+            '57': 'half',
+            '58': 'various',
+            '59': 'potatoes',
+            '60': 'dining',
+            '61': 'admitted',
+            '62': 'received',
+            '63': 'noticeable'
+        }
+        for line in lines:
+            if line:
+                pos = 1
+                if line[-1] == '!':
+                    line = line[:-1].strip()
+                tokens = line.lower().split()
+                if tokens[0][0] in '1234567890':
+                    note = tokens[0]
+                while pos < len(tokens):
+                    correct = table[tokens[pos]]
+                    error = tokens[pos + 1]
+                    if error != correct:
+                        rows.append({
+                            'error': re.sub(r'_', ' ', error),
+                            'correct': re.sub(r'_', ' ', correct),
+                            'note': note,
+                            'freq': 1,
+                            'comment': 'British',
+                            'source': 'nfer2.dat'
+                        })
+                    pos += 2
+    finally:
+        return rows
+
+
+def do_perin1() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'PERIN1DAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        note = ''
+        table = {
+            '1': 'If',
+            '2': 'you',
+            '3': 'are',
+            '4': 'aged 16-19',
+            '5': 'and',
+            '6': 'unemployed',
+            '7': 'you',
+            '8': 'should',
+            '9': 'take',
+            '10': 'advantage',
+            '11': 'of',
+            '12': 'the',
+            '13': 'special',
+            '14': 'training',
+            '15': 'schemes',
+            '16': 'run',
+            '17': 'by',
+            '18': 'the',
+            '19': 'government',
+            '20': 'for',
+            '21': 'unemployed',
+            '22': 'young',
+            '23': 'people',
+            '24': 'Enquire',
+            '25': 'at',
+            '26': 'your',
+            '27': 'local',
+            '28': 'Jobcentre',
+            '29': 'about',
+            '30': 'the',
+            '31': 'different',
+            '32': 'schemes',
+            '33': 'available',
+            '34': 'You',
+            '35': 'can',
+            '36': 'choose',
+            '37': 'to',
+            '38': 'work',
+            '39': 'for',
+            '40': 'an',
+            '41': 'employer',
+            '42': 'on',
+            '43': 'the',
+            '44': 'spot',
+            '45': 'to',
+            '46': 'get',
+            '47': 'experience',
+            '48': 'of',
+            '49': 'a',
+            '50': 'particular',
+            '51': 'type',
+            '52': 'of',
+            '53': 'job',
+            '54': 'or',
+            '55': 'you',
+            '56': 'can',
+            '57': 'work',
+            '58': 'on',
+            '59': 'a',
+            '60': 'special',
+            '61': 'project',
+            '62': 'Or',
+            '63': 'you',
+            '64': 'may',
+            '65': 'prefer',
+            '66': 'to',
+            '67': 'work',
+            '68': 'in',
+            '69': 'Community',
+            '70': 'Industry',
+            '71': 'There',
+            '72': 'are',
+            '73': 'also',
+            '74': 'courses',
+            '75': 'run',
+            '76': 'to',
+            '77': 'help',
+            '78': 'you',
+            '79': 'choose',
+            '80': 'which',
+            '81': 'kind',
+            '82': 'of',
+            '83': 'work',
+            '84': 'suits',
+            '85': 'you',
+            '86': 'best',
+            '87': 'and',
+            '88': 'courses',
+            '89': 'to',
+            '90': 'train',
+            '91': 'you',
+            '92': 'for',
+            '93': 'a',
+            '94': 'particular',
+            '95': 'job',
+            '96': 'at',
+            '97': 'operator',
+            '98': 'or',
+            '99': 'semi-skilled',
+            '100': 'level'
+        }
+        for line in lines:
+            if line:
+                pos = 1
+                if line[-1] == '!':
+                    line = line[:-1].strip()
+                tokens = line.lower().split()
+                if tokens[0][0] in '1234567890':
+                    note = tokens[0]
+                if tokens[pos] != '#':
+                    while pos < len(tokens):
+                        correct = table[tokens[pos]]
+                        error = tokens[pos + 1]
+                        if error != correct:
+                            rows.append({
+                                'error': re.sub(r'_', ' ', error),
+                                'correct': re.sub(r'_', ' ', correct),
+                                'note': note,
+                                'freq': 1,
+                                'comment': 'British',
+                                'source': 'perin1.dat'
+                            })
+                        pos += 2
+    finally:
+        return rows
+
+
 if __name__ == '__main__':
-    dataset = do_abodat() + do_appling1() + do_appling2() + do_bloor() + do_ches()
-    # dataset = do_ches()
+    # dataset = do_abodat() + do_appling1() + do_appling2() + do_bloor() + do_ches() + do_exams() + do_fawthrop1() + do_fawthrop2() + do_sheffield() + do_gates() + do_masters() + do_nfer1() + do_nfer2()
+    dataset = do_perin1()
     # print(dataset)
 
     values = [damerau_levenshtein_distance(error, correct)
@@ -177,4 +660,5 @@ if __name__ == '__main__':
     size = sum(counter.values())
     for key in sorted(counter.keys()):
         value = counter[key]
-        print('%s | %s - %s' % (key, value, value / size))
+        print('%s | %s - %.2f' % (key, value, value / size))
+    print(sum(counter.values()))
