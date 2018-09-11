@@ -136,9 +136,38 @@ def do_ches() -> List[Dict[str, str]]:
     except Exception as e:
         _logger.warning(str(e))
     else:
-        table = '_ often visited aunt magnificent house opposite gallery remember splendid purple curtains wrote' \
-                ' poetry problem understand latest poems wanted laugh pretend really special refreshment there' \
-                ' blue juice cake biscuits stomach contented'.split()
+        table = {
+            '1': 'often',
+            '2': 'visited',
+            '3': 'aunt',
+            '4': 'magnificent',
+            '5': 'house',
+            '6': 'opposite',
+            '7': 'gallery',
+            '8': 'remember',
+            '9': 'splendid',
+            '10': 'purple',
+            '11': 'curtains',
+            '12': 'wrote',
+            '13': 'poetry',
+            '14': 'problem',
+            '15': 'understand',
+            '16': 'latest',
+            '17': 'poems',
+            '18': 'wanted',
+            '19': 'laugh',
+            '20': 'pretend',
+            '21': 'really',
+            '22': 'special',
+            '23': 'refreshment',
+            '24': 'there',
+            '25': 'blue',
+            '26': 'juice',
+            '27': 'cake',
+            '28': 'biscuits',
+            '29': 'stomach',
+            '30': 'contented'
+        }
         note = ''
         for line in lines:
             if line:
@@ -150,7 +179,7 @@ def do_ches() -> List[Dict[str, str]]:
                 pos = 1
                 while pos < len(tokens):
                     error = tokens[pos + 1]
-                    correct = table[int(tokens[pos])]
+                    correct = table[tokens[pos]]
                     if error not in ['..', correct]:
                         rows.append({
                             'error': re.sub(r'_', ' ', error),
@@ -622,6 +651,7 @@ def do_perin1() -> List[Dict[str, str]]:
             '99': 'semi-skilled',
             '100': 'level'
         }
+        dictate = True
         for line in lines:
             if line:
                 pos = 1
@@ -630,10 +660,13 @@ def do_perin1() -> List[Dict[str, str]]:
                 tokens = line.lower().split()
                 if tokens[0][0] in '1234567890':
                     note = tokens[0]
+                    dictate = True
+                if tokens[0][0] == '$':
+                    dictate = False
                 if tokens[pos] != '#':
                     while pos < len(tokens):
-                        correct = table[tokens[pos]]
-                        error = tokens[pos + 1]
+                        correct = table[tokens[pos]] if dictate else tokens[pos + 1][:-1].strip()
+                        error = tokens[pos + 1] if dictate else tokens[pos]
                         if error != correct:
                             rows.append({
                                 'error': re.sub(r'_', ' ', error),
@@ -648,9 +681,122 @@ def do_perin1() -> List[Dict[str, str]]:
         return rows
 
 
+def do_perin2() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'PERIN2DAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        note = ''
+        for line in lines:
+            if line:
+                if line.startswith('$'):
+                    note = line[:1].strip()
+                else:
+                    line = line[:-1].strip()
+                    for mistake in line.split(','):
+                        correct, error = mistake.split(maxsplit=1)
+                        if error != correct:
+                            rows.append({
+                                'error': re.sub(r'_', ' ', error),
+                                'correct': re.sub(r'_', ' ', correct),
+                                'note': note,
+                                'freq': 1,
+                                'comment': 'British',
+                                'source': 'perin2.dat'
+                            })
+    finally:
+        return rows
+
+
+def do_perin3() -> List[Dict[str, str]]:
+    rows = []
+    try:
+        filename = os.path.join(_folder, '0643', 'PERIN3DAT.643')
+        with open(filename, 'r') as file:
+            lines = [line.strip() for line in file]
+    except Exception as e:
+        _logger.warning(str(e))
+    else:
+        note = ''
+        table = {
+            '1': 'engine',
+            '2': 'climb',
+            '3': 'because',
+            '4': 'built',
+            '5': 'laugh',
+            '6': 'curtain',
+            '7': 'traffic',
+            '8': 'juice',
+            '9': 'poetry',
+            '10': 'southern',
+            '11': 'awful',
+            '12': 'stomach',
+            '13': 'opposite',
+            '14': 'special',
+            '15': 'gallery',
+            '16': 'scissors',
+            '17': 'scarcely',
+            '18': 'bicycle',
+            '19': 'initials',
+            '20': 'receipt',
+            '21': 'planted',
+            '22': 'reporter',
+            '23': 'remind',
+            '24': 'chapter',
+            '25': 'driven',
+            '26': 'pretend',
+            '27': 'understand',
+            '28': 'remember',
+            '29': 'contented',
+            '30': 'latest',
+            '31': 'problem',
+            '32': 'refreshment',
+            '33': 'extended',
+            '34': 'visited',
+            '35': 'splendid',
+            '36': 'ventilated',
+            '37': 'magnificent',
+            '38': 'inconvenient',
+            '39': 'establishing',
+            '40': 'unexpected'
+        }
+        for line in lines:
+            if line:
+                if line[-1] == '!':
+                    line = line[:-1].strip()
+                tokens = line.split()
+                if line[0] in '1234567890':
+                    if tokens[2] == '#':
+                        continue
+
+                    note = '%s %s' % (tokens[0], tokens[1])
+                    pos = 2
+                else:
+                    pos = 1
+                while pos < len(tokens):
+                    correct = table[tokens[pos]]
+                    error = tokens[pos + 1]
+                    if error != correct:
+                        rows.append({
+                            'error': re.sub(r'_', ' ', error),
+                            'correct': re.sub(r'_', ' ', correct),
+                            'note': note,
+                            'freq': 1,
+                            'comment': 'British',
+                            'source': 'perin3.dat'
+                        })
+                    pos += 2
+    finally:
+        return rows
+
+
 if __name__ == '__main__':
-    # dataset = do_abodat() + do_appling1() + do_appling2() + do_bloor() + do_ches() + do_exams() + do_fawthrop1() + do_fawthrop2() + do_sheffield() + do_gates() + do_masters() + do_nfer1() + do_nfer2()
-    dataset = do_perin1()
+    dataset = do_abodat() + do_appling1() + do_appling2() + do_bloor() + do_ches() + do_exams() + do_fawthrop1() + do_fawthrop2() + do_sheffield() + do_gates() + do_masters() + do_nfer1() + do_nfer2() + do_perin1() + do_perin2() + do_perin3()
+    # dataset = do_perin3()
     # print(dataset)
 
     values = [damerau_levenshtein_distance(error, correct)
