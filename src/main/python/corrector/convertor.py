@@ -1,9 +1,12 @@
+import json
 import logging
 import os
 import re
 from typing import Counter, Dict, List
 
 from jellyfish import damerau_levenshtein_distance
+
+from corrector.basic import Model
 
 _folder = os.path.abspath(os.path.dirname(__file__))
 _logger = logging.getLogger(__name__)
@@ -795,7 +798,9 @@ def do_perin3() -> List[Dict[str, str]]:
 
 
 if __name__ == '__main__':
-    dataset = do_abodat() + do_appling1() + do_appling2() + do_bloor() + do_ches() + do_exams() + do_fawthrop1() + do_fawthrop2() + do_sheffield() + do_gates() + do_masters() + do_nfer1() + do_nfer2() + do_perin1() + do_perin2() + do_perin3()
+    dataset = do_abodat() + do_appling1() + do_appling2() + do_bloor() + do_ches() + do_exams() + do_fawthrop1() + \
+              do_fawthrop2() + do_sheffield() + do_gates() + do_masters() + do_nfer1() + do_nfer2() + do_perin1() + \
+              do_perin2() + do_perin3()
     # dataset = do_perin3()
     # print(dataset)
 
@@ -806,5 +811,16 @@ if __name__ == '__main__':
     size = sum(counter.values())
     for key in sorted(counter.keys()):
         value = counter[key]
-        print('%s | %s - %.2f' % (key, value, value / size))
+        print('%s | %s - %.6f' % (key, value, value / size))
+
     print(sum(counter.values()))
+
+    errors = {
+        0: 0.975,
+    }
+    for key in counter:
+        errors[key] = counter[key] / size
+
+    Model(errors).save('errors.json')
+
+    print(json.dumps(errors, indent=4, sort_keys=True))
