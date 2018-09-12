@@ -1,8 +1,7 @@
-import json
 import logging
 import os
 import re
-from typing import Counter, Dict, List
+from typing import Dict, List
 
 from jellyfish import damerau_levenshtein_distance
 
@@ -805,22 +804,21 @@ if __name__ == '__main__':
     # print(dataset)
 
     values = [damerau_levenshtein_distance(error, correct)
-              for error, correct in {(row['error'], row['correct']) for row in dataset}]
+              for error, correct in {(row['error'], row['correct']) for row in dataset}
+              if ' ' not in error and ' ' not in correct]
 
-    counter = Counter(values)
-    size = sum(counter.values())
-    for key in sorted(counter.keys()):
-        value = counter[key]
-        print('%s | %s - %.6f' % (key, value, value / size))
+    model = Model(values)
 
-    print(sum(counter.values()))
+    print('Size:', model.size())
+    print('Total:', model.total())
+    for key in model.best(5):
+        print('%s : %s - %.6f' % (key, model.freq(key), model.prob(key)))
 
-    errors = {
-        0: 0.975,
-    }
-    for key in counter:
-        errors[key] = counter[key] / size
+    scaled = {0: 0.975}
+    for key in model.keys():
+        scaled[key] = (1 - scaled[0]) * model.prob(key)
 
-    Model(errors).save('errors.json')
-
-    print(json.dumps(errors, indent=4, sort_keys=True))
+    model = Model(scaled)
+    model.save('errors.json')
+    for key in model.best(5):
+        print('%s : %s - %.6f' % (key, model.freq(key), model.prob(key)))
