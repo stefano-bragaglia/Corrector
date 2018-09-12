@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from collections import Counter
-from typing import List, Optional, Set, Iterable
+from typing import Iterable, List, Optional, Set
 
 _logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ def parse(content: str) -> List[str]:
 
 
 class Corrector:
+    _characters = "abcdefghijklmnopqrstuvwxyz-' "
 
     def __init__(self, words: List[str]):
         self._counter = Counter(words)
@@ -63,15 +64,31 @@ class Corrector:
 
         return {word for word in words if word in self._counter}
 
-
     def p(self, word: str) -> float:
         if not words or not self._count:
             return 0
 
         return self._counter[word] / self._count
 
-    def find_candidates(self, word: str) -> Set[str]:
-        pass
+    def find_candidates(self, word: str, distance: int = 3) -> Set[str]:
+        candidates = {word}
+        for _ in range(distance):
+            results = candidates
+            for candidate in candidates:
+                results.update(self.edit(candidate))
+            candidates = results
+
+        return {candidate for candidate in candidates if candidate in self._counter}
+
+    def edit(self, word: str) -> Set[str]:
+        splits = [(word[:i], word[i:]) for i in range(len(word) + 1)]
+
+        results = {lx + rx[1:] for lx, rx in splits if rx}
+        results |= {lx + rx[1] + rx[0] + rx[2:] for lx, rx in splits if len(rx) > 1}
+        results |= {lx + ch + rx[1:] for lx, rx in splits if rx for ch in self._characters}
+        results |= {lx + ch + rx for lx, rx in splits for ch in self._characters}
+
+        return results
 
 
 if __name__ == '__main__':
