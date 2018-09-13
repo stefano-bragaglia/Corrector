@@ -2,10 +2,8 @@ import json
 import logging
 import os
 import re
-from itertools import chain, combinations, product
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Counter, Hashable, Iterable, List, Mapping, Optional, Set, Union
-
-from tqdm import tqdm
 
 _logger = logging.getLogger(__name__)
 
@@ -25,10 +23,10 @@ def parse(content: str) -> List[str]:
     if not content:
         return []
 
-    # FIXME Should I keep numbers? I'm not going to change them...
-    return re.findall(r'\b[a-z]+[\'-][a-z]+[\'-][a-z]+\b|'
-                      r'\b[a-z]+[\'-][a-z]+\b|'
-                      r'\b[a-z]+\b', content.lower())
+    return re.findall(r'\w+', content.lower())
+    # return re.findall(r'\b[a-z]+[\'-][a-z]+[\'-][a-z]+\b|'
+    #                   r'\b[a-z]+[\'-][a-z]+\b|'
+    #                   r'\b[a-z]+\b', content.lower())
 
 
 characters = "abcdefghijklmnopqrstuvwxyz'-"
@@ -44,27 +42,41 @@ def edit(word: str) -> Set[str]:
     return result
 
 
-def get_candidates(word: str, d: int = 2) -> Set[str]:
-    if d == 0:
+def get_candidates(word: str, d: int = 2):
+    if d <= 0:
         return {word}
     elif d == 1:
         return edit(word)
     elif d == 2:
-        return {e for item in edit(word) for e in edit(item)}
-
-def correct(dictionary: 'Model', error: 'Model', word: str) -> str:
-    result, best = word, error.prob(0) * dictionary.prob(word)
-    for item1 in edit(word):
-        prob = error.prob(1) * dictionary.prob(item1)
-        if prob > best:
-            result, best = prob
-        for item2 in edit(item1):
-            prob = error.prob(2) * dictionary.prob(item2)
-            if prob > best:
-                result, best = prob
+        return {item for e in edit(word) for item in edit(e)}
+    else:
+        result = {word}
+        for _ in range(d):
+            with ThreadPoolExecutor(8) as pool:
+                futures = {pool.submit(edit, candidate) for candidate in result}
+                result = set()
+                for candidate in as_completed(futures):
+                    result |= candidate.result()
 
     return result
 
+
+def correct(word: str, dictionary: 'Model', errors: 'Model', d: int = 2) -> str:
+    best, result = None, None
+    for i in range(d):
+        candidates = get_candidates(word, d)
+        candidates = dictionary.filter(candidates)
+        for candidate in candidates:
+            # prob = errors.prob(i) * dictionary.prob(candidate)
+            prob = dictionary.prob(candidate)
+            if best is None or prob > best:
+                best, result = prob, candidate
+
+    return result or word
+
+
+def review(text: str, dictionary: 'Model', errors: 'Model', d: int = 2) -> str:
+    return ' '.join([correct(word, dictionary, errors) for word in text.split()])
 
 
 class Model:
@@ -129,7 +141,6 @@ if __name__ == '__main__':
     print('Prob(unmentioned):', dictionary.prob('unmentioned'))
     print('Filter(the,outrivaled,unmentioned):', dictionary.filter({'the', 'outrivaled', 'unmentioned'}))
 
-    for i in tqdm(range(3)):
-        candidates = get_candidates('tests', i)
-        items = dictionary.filter(candidates)
-        print(items)
+    sentence = 'korrectud speling'
+    print('|'+ sentence +'|')
+    print('Did you mean:', review(sentence, dictionary, errors))

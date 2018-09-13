@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from jellyfish import damerau_levenshtein_distance
 
-from corrector.basic import Model
+from src.main.python.corrector.basic import Model
 
 _folder = os.path.abspath(os.path.dirname(__file__))
 _logger = logging.getLogger(__name__)
